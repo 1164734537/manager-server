@@ -4,15 +4,18 @@ const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
-const logger = require('koa-logger')
+// const logger = require('koa-logger')
 const log4js = require('./utils/log4j')
 
-const index = require('./routes/index')
 const users = require('./routes/users')
-
-
+const router = require('koa-router')()
+const jwt = require('jsonwebtoken');
+const koajwt = require('koa-jwt');
+const util = require('./utils/util')
 // error handler
 onerror(app)
+
+require('./config/db')
 
 // middlewares
 app.use(bodyparser({
@@ -28,14 +31,45 @@ app.use(views(__dirname + '/views', {
 
 // logger
 app.use(async (ctx, next) => {
+  log4js.info(`get params:${JSON.stringify(ctx.request)}`)
+  log4js.info(`post params:${JSON.stringify(ctx.body)}`)
   await next()
-  log4js.info(`log output`)
+  .catch((err)=>{
+    console.log(err.status)
+    if(err.status== '401'){
+      ctx.status = 200;
+      ctx.body = util.fail('Token认证失败', util.CODE.AUTH_ERROR);
+    }else{
+      throw err;
+    }
+  })
+  // log4js.info(`log output`)
 })
 
-// routes
-app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
+// 排除
+app.use(koajwt({secret:'zihang'})
+.unless({
+  path: [/^\/api\/users\/login/]
+})
+)
 
+
+router.prefix("/api")
+
+// router.get('/leave/count',(ctx)=>{
+//     // console.log(ctx.request)
+//     const token = ctx.request.header.authorization.split(" ")[1];
+//     // jwt.verify(token,'zihang')
+//     const payload = jwt.verify(token,'zihang');
+//     // const res = {"code":200,"data":9,"msg":""}
+//     ctx.body = 'payload';
+
+// })
+
+
+
+router.use(users.routes(), users.allowedMethods())
+app.use(router.routes(),router.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   // console.error('server error', err, ctx)

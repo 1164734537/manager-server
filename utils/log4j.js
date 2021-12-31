@@ -42,7 +42,7 @@ log4js.configure({
 })
 
 /**
- * 日志输出，level为debug
+ * 日志输出，level为info
  * @param {*} content 
  */
 

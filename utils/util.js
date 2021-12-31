@@ -39,5 +39,6 @@ module.exports = {
         return {
             code, msg, data
         }
-    }
+    },
+    CODE
 }
