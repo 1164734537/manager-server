@@ -5,7 +5,8 @@ const router = require('koa-router')()
 const User = require('./../models/userSchema')
 const Counter = require('./../models/counterSchema')
 const util = require('./../utils/util')
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken')
+const md5 = require('md5')
 router.prefix('/users')
 
 router.post('/login', async (ctx) => {
@@ -16,8 +17,8 @@ router.post('/login', async (ctx) => {
     } = ctx.request.body
     const res = await User.findOne({
       userName,
-      userPwd
-    })
+      userPwd: md5(userPwd)
+    },'userId userName userEmail state role depId roleList')
     if (res) {
       const data = res._doc
       const token = jwt.sign({
@@ -118,7 +119,7 @@ router.post('/operate', async (ctx) => {
       const user = new User({
         userId: doc.sequence_value,
         userName,
-        userPwd:'123456',
+        userPwd: md5('123456'),
         userEmail,
         role: 1, //默认普通用户
         roleList,
